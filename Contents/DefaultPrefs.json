@@ -1,0 +1,38 @@
+[
+  {
+    "id": "logger.debug.enabled",
+    "label": "Enable debug logging?",
+    "type": "bool",
+    "default": "false"
+  },
+  {
+    "id": "ignore.role.names",
+    "label": "Ignore Role names which include",
+    "type": "text",
+    "default": "random"
+  },
+  {
+    "id": "ignore.collection.names",
+    "label": "Ignore Collection names which include",
+    "type": "text",
+    "default": "2160p,2160,1080,1080p,720,720p,540,540p,480,480p,360,360p,240,240p,x265,HEVC,N1C"
+  },
+  {
+    "id": "nameformat.scene.title",
+    "label": "Scene - Title Format",
+    "type": "text",
+    "default": "{title}"
+  },
+  {
+    "id": "nameformat.collection.series",
+    "label": "Collection - Series Naming Format",
+    "type": "text",
+    "default": "{series}"
+  },
+  {
+    "id": "nameformat.collection.studio",
+    "label": "Collection - Studio Naming Format",
+    "type": "text",
+    "default": "{studio}"
+  }
+]
