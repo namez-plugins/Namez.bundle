@@ -8,6 +8,7 @@ Supports:
 - Studios
 - Sites
 - Release Dates
+- Custom Collections
 
 Sample File Names:
 
