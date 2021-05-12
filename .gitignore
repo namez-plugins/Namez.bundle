@@ -1,2 +1,5 @@
 Contents/Libraries/Shared/*.dist-info
 lib
+**/*.pyc
+@eaDir
+**/*/@eaDir
