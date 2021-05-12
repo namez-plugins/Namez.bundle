@@ -1,6 +1,6 @@
-# AdultDVDEmpire
+# Namez
 # Update: 8 January 2019
-# Description: New updates from a lot of diffrent forks and people. Please read README.md for more details.
+# Description: Launch!
 
 # Add vendor directory to module search path
 import re
@@ -10,7 +10,8 @@ import urllib
 import sys
 
 import os
-import dateparser
+
+from dateutil.parser import parse, parserinfo
 
 # preferences
 preference = Prefs
@@ -99,7 +100,7 @@ class ParseName:
         if notes:
             logger("ParseName", "notes: %s", str(notes))
             for ni, note in enumerate(notes):
-                publishedAt = dateparser.parse(note)
+                publishedAt = parse(note)
                 if publishedAt:
                     self.publishedAt = publishedAt
                     self.name = self.name.replace("(%s)" % note, "")
