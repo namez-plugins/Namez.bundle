@@ -1,11 +1,14 @@
 #!/bin/sh
+set -e
 
 echo "Installing Namez python packages..."
 echo ""
 CURR=$(pwd)
 DEST=$CURR/Contents/Libraries/Shared
+PIP=$CURR/Contents/Libraries/Shared/bin/pip2.7
 
 echo "Current directory: $CURR"
+echo "Using pip: '$PIP'"
 
 echo "Ensure $DEST exists..."
 mkdir -p "$DEST"
@@ -13,13 +16,14 @@ mkdir -p "$DEST"
 echo "Setting PYTHONUSERBASE to $CURR"
 export PYTHONUSERBASE="$CURR"
 echo ""
-echo "Start install from $CURR/requirements.txt"
-pip install -I --user -r "$CURR/requirements.txt"
-echo "Syncing installed packages to $DEST"
-# mv -v lib/python/site-packages/* "$DEST"
+echo "Install Python into Shared"
+echo "$CURR/Contents/Libraries/Shared/bin/pip2.7 install from $CURR/requirements.txt"
 
-echo "Cleaning up original install dir.."
-rm -Rf lib
+"$PIP" install -r requirements.txt -t "$CURR/Contents/Libraries/Shared"
+# echo "Syncing installed packages to $DEST"
+
+# echo "Cleaning up original install dir.."
+# rm -Rf lib
 echo "Removing dist-info from $DEST ..."
 cd "$DEST"
 ls | grep \.dist-info | xargs rm -Rf
