@@ -1,5 +1,4 @@
-[
-  {
+[{
     "id": "logger.debug.enabled",
     "label": "Enable debug logging?",
     "type": "bool",
@@ -7,9 +6,9 @@
   },
   {
     "id": "ignore.role.names",
-    "label": "Ignore Role names which include",
+    "label": "Ignore Actor names which include",
     "type": "text",
-    "default": "random"
+    "default": "random,ignore,nobody"
   },
   {
     "id": "ignore.collection.names",
@@ -18,20 +17,32 @@
     "default": "2160p,2160,1080,1080p,720,720p,540,540p,480,480p,360,360p,240,240p,x265,HEVC,N1C"
   },
   {
-    "id": "nameformat.scene.title",
-    "label": "Scene - Title Format",
+    "id": "match.collection.stringmap",
+    "label": "Manual Collections - Strings to auto match to Collection",
     "type": "text",
-    "default": "{title}"
+    "default": "pov|POV,wet|Oiled and Wet,oil|Oiled and Wet"
+  },
+  {
+    "id": "match.genre.stringmap",
+    "label": "Manual Genres - Strings to auto match to Genre",
+    "type": "text",
+    "default": "pov|POV"
+  },
+  {
+    "id": "nameformat.scene.title",
+    "label": "Media - Format string for Titles - \"{series}: {actor} - {title}\" produces title: 'Avengers: Black Widdow - Video Name'",
+    "type": "text",
+    "default": "{actor} - {title}"
   },
   {
     "id": "nameformat.collection.series",
-    "label": "Collection - Series Naming Format",
+    "label": "Collections - Format string for Series",
     "type": "text",
     "default": "{series}"
   },
   {
     "id": "nameformat.collection.studio",
-    "label": "Collection - Studio Naming Format",
+    "label": "Collections - Format string for Studios",
     "type": "text",
     "default": "{studio}"
   }
