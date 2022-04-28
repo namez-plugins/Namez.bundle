@@ -4,6 +4,7 @@
 # pylint: disable=undefined-variable
 # pylint: disable=import-error
 # Add vendor directory to module search path
+import collections
 import re
 import datetime
 import random
@@ -40,12 +41,25 @@ collection_studio_format = preference["nameformat.collection.studio"]
 collection_series_format = preference["nameformat.collection.series"]
 
 match_collection_stringmap = map(
-    lambda stringmap: (lambda text: text.strip(), stringmap.split('|')),
-    preference["match.collection.stringmap"].split(","))
+    lambda stringmap: (
+        lambda text: text.strip(), stringmap.split('|')
+    ),
+    preference["match.collection.stringmap"].split(",")
+)
+
+match_collection_actorstringmap = map(
+    lambda actorstringmap: (
+            lambda text: text.strip(), actorstringmap.split('|')
+    ),
+    preference["match.collection.actorstringmap"].split(",")
+)
 
 match_genre_stringmap = map(
-    lambda stringmap: (lambda text: text.strip(), stringmap.split('|')),
-    preference["match.genre.stringmap"].split(","))
+    lambda stringmap: (
+        lambda text: text.strip(), stringmap.split('|')
+    ),
+    preference["match.genre.stringmap"].split(",")
+)
 
 
 def is_ignored_collection(name):
@@ -67,14 +81,17 @@ def is_ignored_role(name):
 
 
 def safeformat(s, *args, **kwargs):
+    # print("safeformat: %s" % s)
+    # print("kwargs: %s" % str(data))
+    # return clean_name(s.format(data))
     while True:
         try:
-            return clean_name(s.format(*args, **kwargs))
+            return clean_name(s.format(**kwargs))
         except KeyError as e:
             e = e.args[0]
             kwargs[e] = "{%s}".format(e)
 
-
+# clean odd formatting (like leading hyphens)
 def clean_name(name):
     if name:
         name = re.sub(r"\s\s+", " ", name)
@@ -128,6 +145,17 @@ class ParseName:
 
     def log(self, msg, *args):
         logger("ParseName", msg, *args)
+    
+    def todict(self):
+        return dict(
+            actor=self.actors,
+            title=self.title,
+            publishedAt=self.publishedAt,
+            studio=self.studio,
+            series=self.series,
+            collections=self.collections,
+            notes=self.notes,
+        )
 
     def __init__(self, name):
         self.log("init name: %s", name)
@@ -156,6 +184,15 @@ class ParseName:
         # actors
         self.matchActors()
 
+        # add optional collections for multiple actors
+        for actmap in match_collection_actorstringmap:
+            values = actmap[1]
+            count = int(str(values[0]))
+            name = str(values[1])
+            self.log("actmap: %s -> %s", count, name)
+            if count == len(self.actors):
+                self.addCollection(name)
+
         # title - scrub and build
         self.title = self.name
         self.actors = list(self.actors)
@@ -167,45 +204,56 @@ class ParseName:
         self.title = self.title.lstrip(punctuation)
         self.title = self.title.lstrip()
         self.title = self.title.lstrip(punctuation)
-        self.title = clean_name(self.title.lstrip())
 
-        self.title = safeformat(
-            scene_title_format,
-            title=self.title,
-            actor=self.actors[0] if len(self.actors) else "",
-            studio=self.studio)
-        logger("Final", "title: %s", self.title)
-        logger("Final", "actors %s", str(self.actors) if self.actors else None)
-        logger("Final", "studio: %s", self.studio)
-        logger("Final", "series: %s", self.series)
+        
+        feat_actor = ", ".join(self.actors[1:]) if len(self.actors) >= 2 else None
+
+        self.title = clean_name(scene_title_format.format(
+                actor=self.actors[0] if len(self.actors) else "",
+                feat_actor="ft. {}".format(feat_actor) if feat_actor else "",
+                title=self.title,
+                series="({})".format(self.series) if self.series else "",
+                studio="({})".format(self.studio) if self.studio else "",
+                publishedAt=self.publishedAt if self.publishedAt else "",
+                release=self.release if self.release else "",
+            ))
+
+        logger("display", "title: %s", self.title)
+        logger("display", "actors %s", str(self.actors) if self.actors else None)
+        logger("display", "studio: %s", self.studio)
+        logger("display", "series: %s", self.series)
+
         if self.publishedAt:
-            logger("Final", "publishedAt: %s", str(self.publishedAt))
+            logger("display", "publishedAt: %s", str(self.publishedAt))
         if self.release:
-            logger("Final", "release: %s", self.release)
-        logger("Final", "collections: %s", str(self.collections))
-        logger("Final", "notes: %s", str(self.notes))
+            logger("display", "release: %s", self.release)
+        logger("display", "collections: %s", str(self.collections))
+        logger("display", "notes: %s", str(self.notes))
 
     def matchActors(self):
-        self.log("matchActors name: %s", self.name)
-
         def parse_actors_string(name):
             and_actors = name.split(" and ")
             amp_actors = name.split(" & ")
-            if self.name and len(self.name.split(" - ")) >= 2:
-                if len(and_actors) >= 1:
-                    [self.addActor(actor) for actor in and_actors]
-                elif len(amp_actors) >= 1:
-                    [self.addActor(actor) for actor in amp_actors]
-                else:
-                    self.addActor(actor)
+            if len(and_actors) > 1:
+                self.log("matchActors and_actors: %s", and_actors)
+                [self.addActor(actor) for actor in and_actors]
+            if len(amp_actors) > 1:
+                self.log("matchActor amp_actors: %s", amp_actors)
+                [self.addActor(actor) for actor in amp_actors]
+
+            if len(and_actors) == 1 and len(amp_actors) == 1:
+                self.log("matchActors: %s", name)
+                self.addActor(name)
 
         name = self.name.split(" - ")[0]
+        self.log("matchActors split name: %s", name)
         parse_actors_string(name)
         # featured actors
         feat_actors = re.findall(r"ft\. ([aA-zZ\s&]+)", self.name)
         if len(feat_actors) > 0:
             self.log("feat_actors: %s", feat_actors)
             [parse_actors_string(actor) for actor in feat_actors]
+            self.name = re.sub(r"ft\.\s?", "", self.name)
 
     def matchPublishedAt(self, string):
         if not self.publishedAt:
@@ -258,7 +306,7 @@ class ParseName:
                 self.log("groups: %s", groups)
 
                 if (len(groups) == 1):
-                    self.addCollection(groups[0])
+                    self.addCollection(groups[0].replace(".com", ""))
                 elif len(groups) >= 2:
                     studio = groups[0]
                     series = groups[1]
@@ -407,12 +455,14 @@ class NZAgent(Agent.Movies):  # pylint: disable=undefined-variable
         if parsed.studio:
             metadata.studio = parsed.studio
             metadata.collections.add(
-                safeformat(collection_studio_format, studio=parsed.studio))
+                safeformat(collection_studio_format, studio=parsed.studio if parsed.studio else None)
+            )
             log("metadata.studio: %s", metadata.studio)
         if parsed.series:
             log("parsed.series: %s", parsed.series)
             metadata.collections.add(
-                safeformat(collection_series_format, series=parsed.series))
+                safeformat(collection_series_format, series=parsed.series if parsed.series else None)
+            )
 
         # if parsed.summary:
         #     metadata.summary = parsed.summary
